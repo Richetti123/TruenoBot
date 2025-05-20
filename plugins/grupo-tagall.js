@@ -6,10 +6,10 @@ throw false
 
 if (command == 'tagall' || command == 'invocar' || command == 'todos' || command == 'invocación' || command == 'invocacion') {
 let pesan = args.join` `
-let oi = `@richetti_123 ${pesan}`
-let teks = `${global.packname} te invoca despiertate😡!!\n\n${oi}\n\n`
+let oi = `@ysebastian.g ${pesan}`
+let teks = `*ACTIVENSE TODOS 😛*\n\n${oi}\n\n`
 for (let mem of participants) {
-teks += `😼 @${mem.id.split('@')[0]}\n`}
+teks += `⚡ @${mem.id.split('@')[0]}\n`}
 teks += `${global.packname}`
 conn.sendMessage(m.chat, { text: teks, mentions: participants.map(a => a.id) }, )  
 }
@@ -25,7 +25,7 @@ memberData.sort((a, b) => b.messages - a.messages);
 let activeCount = memberData.filter(mem => mem.messages > 0).length;
 let inactiveCount = memberData.filter(mem => mem.messages === 0).length;
   
-let teks = `${global.packname} te invoca despiertate😡!!\n\n*📊 Actividad del grupo 📊*\n\n`;
+let teks = `*ACTIVENSE TODOS 😛*\n\n*📊 Actividad del grupo 📊*\n\n`;
 teks += `Grupo: ${await conn.getName(m.chat)}\n`;
 teks += `Total de miembros: ${participants.length}\n`;
 teks += `Miembros activos: ${activeCount}\n`;
