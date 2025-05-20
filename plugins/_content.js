@@ -52,7 +52,7 @@ global.accountsgb = [all, canal1, canal2, canal3, canal4, tk, ig, yt, paypal, fb
 global.cuentas = [grupo1, grupo2, grupo_collab1, grupo_collab2, grupo_collab3, grupo_collab4][Math.floor(Math.random() * 6)]
 
 global.canalIdGB = ["120363314640015862@newsletter"]
-global.canalNombreGB = ["BOTS Y MAS @ysebastian.g"]
+global.canalNombreGB = ["CANAL OFICIAL @ysebastian.g"]
 global.channelRD = await getRandomChannel()
 
 // Imágenes 
