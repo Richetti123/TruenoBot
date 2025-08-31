@@ -1,101 +1,43 @@
-import fetch from 'node-fetch';
-import fs from 'fs';
-import path from 'path';
-import axios from 'axios';
-import translate from '@vitalets/google-translate-api';
+// Aunque ya no se usa, se mantiene para evitar errores de importación si es una dependencia obligatoria.
 import { perplexity } from '../lib/chatgpt.js';
-import { Configuration, OpenAIApi } from "openai";
 
-const apikey_base64 = "c2stcHJvai1tUzN4bGZueXo0UjBPWV8zbm1DVDlMQmlmYXhYbVdaa0ptUVFJMDVKR2FxdHZCbk9ncWZjRXdCbEJmMU5WN0lYa0pncVJuM3BNc1QzQmxia0ZKMVJ5aEJzUl93NzRXbll5LWdjdkowT0NQUXliWTBOcENCcDZIOTlCVVVtcWxuTjVraEZxMk43TGlMU0RsU0s1cXA5Tm1kWVZXc0E=";
+const handler = async (m, { conn, text, usedPrefix, command }) => {
+    // Si el prefijo es 'a' o 'A', se detiene la ejecución
+    if (usedPrefix.toLowerCase() === 'a') return;
 
-const apikey = Buffer.from(apikey_base64, 'base64').toString('utf-8');
-const configuration = new Configuration({apiKey: apikey, 
-});
-const openai = new OpenAIApi(configuration);
+    // Mensaje de ayuda si no se proporciona texto
+    if (!text) {
+        throw `*${'❗'}_INGRESE UNA PETICION O UNA ORDEN PARA USAR LA FUNCIÓN DEL CHATGPT_*\n\n❏ _EJEMPLO DE PETICIONES Y ÓRDENES_\n❏ ${usedPrefix + command} Recomienda un top 10 de películas de acción\n❏ ${usedPrefix + command} Codigo en JS para un juego de cartas`;
+    }
 
-const handler = async (m, {conn, text, usedPrefix, command}) => {
-if (usedPrefix == 'a' || usedPrefix == 'A') return;
-if (!text) throw `*${lenguajeGB['smsAvisoMG']()}𝙄𝙉𝙂𝙍𝙀𝙎𝙀 𝙐𝙉𝘼 𝙋𝙀𝙏𝙄𝘾𝙄𝙊𝙉 𝙊 𝙐𝙉𝘼 𝙊𝙍𝘿𝙀𝙉 𝙋𝘼𝙍𝘼 𝙐𝙎𝘼𝙍 𝙇𝘼 𝙁𝙐𝙉𝘾𝙄𝙊𝙉 𝘿𝙀𝙇 𝘾𝙃𝘼𝙏𝙂𝙋𝙏\n\n❏ 𝙀𝙅𝙀𝙈𝙋𝙇𝙊 𝘿𝙀 𝙋𝙀𝙏𝙄𝘾𝙄𝙊𝙉𝙀𝙎 𝙔 𝙊𝙍𝘿𝙀𝙉𝙀𝙎\n❏ ${usedPrefix + command} Recomienda un top 10 de películas de acción\n❏ ${usedPrefix + command} Codigo en JS para un juego de cartas`    
-//let syms1 = `Actuaras como un Bot de WhatsApp el cual fue creado por Jair Gonzales, tu seras MichiBot 🐈`;  
-let syms1 = await fetch('https://raw.githubusercontent.com/Skidy89/chat-gpt-jailbreak/main/Text.txt').then(v => v.text());
+    try {
+        // --- ÚNICO INTENTO: USANDO API DE STARLIGHTS TEAM ---
+        // Se define el prompt para la personalidad del bot, combinando "MichiBot" y "xexploit"
+        const personaPrompt = `
+        Eres un bot de WhatsApp llamado MichiBot. Te gustan los gatos, aunque no lo mencionas a menudo. Actuarás como un bot con dos personalidades: tu personalidad principal de MichiBot y una segunda personalidad que es un sistema root de xexploit 3.0.
+        `;
 
-if (command == 'ia' || command == 'chatgpt') {
-try {     
-const messages = [{ role: 'system', content: syms1 },
-{ role: 'user', content: text }];
+        const encodedContent = encodeURIComponent(personaPrompt);
+        const encodedText = encodeURIComponent(text);
+        const url = `https://apis-starlights-team.koyeb.app/starlight/turbo-ai?content=${encodedContent}&text=${encodedText}`;
+        
+        const responseWeb = await fetch(url);
+        if (!responseWeb.ok) {
+            throw new Error(`Fallo en la API con status ${responseWeb.status}`);
+        }
+        const json = await responseWeb.json();
 
-const chooseModel = (query) => {
-const lowerText = query.toLowerCase();
+        if (json.content) {
+            await m.reply(json.content);
+        } else {
+            throw new Error('Respuesta sin resultado de la IA');
+        }
+    } catch (e) {
+        console.error('Error al procesar la solicitud:', e.message);
+        await m.reply(`❌ Lo siento, ocurrió un error al procesar tu solicitud. Detalles del error: ${e.message}`);
+    }
+};
 
-if (lowerText.includes('código') || lowerText.includes('programación') || lowerText.includes('code') || lowerText.includes('script')) {
-return 'codellama-70b-instruct';
-} else if (lowerText.includes('noticias') || lowerText.includes('actual') || lowerText.includes('hoy') || lowerText.includes('último')) {
-return 'sonar-medium-online';
-} else if (lowerText.includes('explica') || lowerText.includes('por qué') || lowerText.includes('razona') || lowerText.includes('analiza')) {
-return 'sonar-reasoning-pro';
-} else if (lowerText.includes('cómo') || lowerText.includes('paso a paso') || lowerText.includes('instrucciones')) {
-return 'mixtral-8x7b-instruct';
-} else if (lowerText.includes('charla') || lowerText.includes('habla') || lowerText.includes('dime')) {
-return 'sonar-medium-chat';
-} else {
-return 'sonar-pro';
-}};
-
-const selectedModel = chooseModel(text);
-const fallbackModels = Object.keys(perplexity.api.models).filter(m => m !== selectedModel);
-let response = await perplexity.chat(messages, selectedModel);
-
-if (!response.status) {
-for (const fallback of fallbackModels) {
-try {
-response = await perplexity.chat(messages, fallback);
-if (response.status) {
-//console.log(`Respaldo ${fallback} funcionó`);
-break;
-}} catch (e) {
-console.error(`Falló ${fallback}: ${e.message}`);
-}}}
-
-if (response.status) {
-await m.reply(response.result.response);
-}
-} catch {
-try {     
-async function getResponse(prompt) {
-try {
-await delay(1000); 
-const response = await axios.post('https://api.openai.com/v1/chat/completions', 
-{ model: 'gpt-4o-mini', 
-messages: [{ role: 'user', content: prompt }],
-max_tokens: 300,
-}, { headers: {
-'Content-Type': 'application/json',
-'Authorization': `Bearer ${apikey}`, 
-}});
-return response.data.choices[0].message.content;
-} catch (error) {
-console.error(error);
-}}
-
-const respuesta = await getResponse(text);
-m.reply(respuesta);
-} catch {
-try { 
-let gpt = await fetch(`${apis}/ia/gptweb?text=${text}`) 
-let res = await gpt.json()
-await m.reply(res.gpt)
-/*let gpt = await fetch(`https://deliriusapi-official.vercel.app/ia/chatgpt?q=${text}`)
-let res = await gpt.json()
-await m.reply(res.data)*/
-} catch {
-}}}}
-
-if (command == 'openai' || command == 'ia2' || command == 'chatgpt2') {
-conn.sendPresenceUpdate('composing', m.chat);
-let gpt = await fetch(`${apis}/ia/gptweb?text=${text}`) 
-let res = await gpt.json()
-await m.reply(res.gpt)
-}}
+// Se actualizó el nombre del comando para incluir todas las opciones
 handler.command = /^(openai|chatgpt|ia|ai|openai2|chatgpt2|ia2)$/i;
 export default handler;
-
